@@ -14,19 +14,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "main.ts",
-    "App.vue",
-    "components/**/*.vue",
-    "layouts/**/*.vue",
-    "pages/**/*.vue",
-    "router.ts",
-    "server/src/**/*.ts",
-    "vite.config.ts",
-    "env.d.ts"
-  ],
-  "references": []
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts", "env.d.ts"]
 }
