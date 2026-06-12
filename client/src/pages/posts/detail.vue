@@ -2,16 +2,18 @@
   <article class="article">
     <p class="eyebrow">Post</p>
 
-    <p v-if="loading" class="hero__text">加载中…</p>
-    <p v-else-if="error" class="hero__text">{{ error }}</p>
+    <p v-if="loading" class="state">加载中…</p>
+    <p v-else-if="error" class="state">{{ error }}</p>
 
     <template v-else-if="post">
       <h1>{{ post.title }}</h1>
       <p class="article__meta">
-        {{ post.category }} · {{ post.publishedAt }} · 阅读 {{ post.views }}
+        <span class="pill">{{ post.category }}</span>
+        <span>📅 {{ formatDate(post.publishedAt) }}</span>
+        <span>👁 {{ post.views }} 次阅读</span>
       </p>
       <div class="prose">
-        <pre style="white-space: pre-wrap; font-family: inherit">{{ post.content }}</pre>
+        <pre>{{ post.content }}</pre>
       </div>
     </template>
   </article>
@@ -26,6 +28,13 @@ const route = useRoute()
 const post = ref<PostDetail | null>(null)
 const loading = ref(true)
 const error = ref('')
+
+function formatDate(value: string) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return value
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 async function load(slug: string) {
   loading.value = true

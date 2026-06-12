@@ -1,0 +1,16 @@
+# 不需要进镜像的东西（加快构建、避免把本机 node_modules 带进容器）
+node_modules
+**/node_modules
+dist
+**/dist
+.vite
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+logs
+.DS_Store
+Thumbs.db
+.vscode

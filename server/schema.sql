@@ -1,3 +1,6 @@
+-- 强制本次导入连接使用 utf8mb4，避免中文（如 Docker 初始化）变成乱码
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS posts (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   title VARCHAR(200) NOT NULL,

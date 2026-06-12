@@ -1,5 +1,22 @@
 {
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "vue.server.hybridMode": true
+  "vue.server.hybridMode": true,
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "Mysql",
+      "password": "root",
+      "username": "root",
+      "database": "mysql"
+    }
+  ]
 }

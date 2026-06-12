@@ -1,4 +1,60 @@
+# ============================================================
+# 一条 `docker compose up` 启动整个项目：前端 + 后端 + MySQL + Redis
+# 4 个容器在同一个网络里，用「服务名」互相访问。
+# ============================================================
 services:
+  # -------- 前端（Vite 开发服务器，热更新）--------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: youshika-web
+    command: pnpm dev:web
+    environment:
+      # 让 vite 把 /api 代理到后端容器（用服务名 api，不是 localhost）
+      VITE_API_PROXY: http://api:3001
+      # 触发 vite 文件轮询，Windows 挂载卷下热更新才生效
+      DOCKER: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app          # 把项目源码挂进容器 → 改代码即时生效
+      - /app/node_modules # 匿名卷：保留容器内 Linux 版依赖，不被本机覆盖
+    depends_on:
+      - api
+
+  # -------- 后端（Express + tsx watch，热更新）--------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: youshika-api
+    command: pnpm dev:api
+    environment:
+      SERVER_PORT: 3001
+      CORS_ORIGIN: http://localhost:5173
+      # 注意：连的是服务名，不是 localhost
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      DB_NAME: ${MYSQL_DATABASE:-youshika}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # 让后端 tsx watch 在挂载卷下也能监测改动
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy   # 等 MySQL 真正就绪再启动后端
+      redis:
+        condition: service_healthy
+
+  # -------- MySQL --------
   mysql:
     image: mysql:8.0
     container_name: youshika-mysql
@@ -12,22 +68,26 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      # 主机用 13306 连容器 MySQL（避开本机原生 MySQL 的 3306，也避开 Windows 保留段 3307-3806）
+      - "${MYSQL_HOST_PORT:-13306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+      # 首次启动空数据卷时，自动执行建表 + 示例数据
       - ./server/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
+  # -------- Redis --------
   redis:
     image: redis:7-alpine
     container_name: youshika-redis
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      # 主机用 6380 连容器 Redis，避开本机原生 Redis 的 6379
+      - "${REDIS_HOST_PORT:-6380}:6379"
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
